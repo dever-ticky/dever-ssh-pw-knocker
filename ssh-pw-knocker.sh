@@ -3,6 +3,7 @@
 if [ "$#" -ne 1 ]
 then
     echo 'Usage: ./ssh-pw-knocker.sh /path/to/file'
+    echo 'Ex: ./ssh-pw-knocker.sh /etc/hosts'
     exit 1
 fi
 
