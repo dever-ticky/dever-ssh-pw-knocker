@@ -1,5 +1,7 @@
 #!/bin/bash
 
+REGEX_IP_HOST="\b(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\b[[:blank:]]+[^[:blank:]]+"
+
 # knock and check password authentication is allowed
 knock_ssh_pw () {
     IP=$1
@@ -23,12 +25,13 @@ knock_ssh_pw () {
     else
         echo "$IP $MACHINE - offline"
     fi
+    exit 0
 }
 
 # usage
 if [ "$#" -ne 1 ] ; then
     echo "Usage: ./ssh-pw-knocker.sh /path/to/file"
-    echo "Ex: ./ssh-pw-knocker.sh /etc/hosts"
+    echo "E.g. usage: ./ssh-pw-knocker.sh /etc/hosts"
     exit 1
 fi
 
@@ -38,8 +41,6 @@ if [ ! -r $1 ] ; then
     exit 2
 fi
 
-REGEX_IP_HOST="\b(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\b[[:blank:]]+[^[:blank:]]+"
-
 # remove commented lines from file and start reading it
 grep -v '^#' $1 | while IFS= read -r LINE
 do
@@ -48,10 +49,12 @@ do
         CURR_IP=$(echo "$LINE" | sed 's/\t/ /g' | cut -d " " -f 1)
         CURR_MACHINE=$(echo "$LINE" | sed 's/\t/ /g' | cut -d " " -f 2)
         # knock
-        knock_ssh_pw "$CURR_IP" "$CURR_MACHINE"
+        knock_ssh_pw "$CURR_IP" "$CURR_MACHINE" &
     else
         echo "Ignore invalid line - $LINE"
     fi
 done
+
+wait
 
 exit 0
