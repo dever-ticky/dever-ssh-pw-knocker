@@ -34,7 +34,7 @@ fi
 
 # check to see if file is accessible
 if [ ! -r $1 ] ; then
-    echo "File not readable"
+    echo "File $1 not readable"
     exit 2
 fi
 
