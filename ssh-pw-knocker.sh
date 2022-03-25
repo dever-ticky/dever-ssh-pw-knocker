@@ -38,15 +38,15 @@ if [ ! -r $1 ] ; then
     exit 2
 fi
 
-REGEX_IP_HOST="\b(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\b [^\s]+"
+REGEX_IP_HOST="\b(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\b[[:blank:]]+[^[:blank:]]+"
 
 # remove commented lines from file and start reading it
 grep -v '^#' $1 | while IFS= read -r LINE
 do
     # validate "IP host" pattern and knock
     if [[ $LINE =~ $REGEX_IP_HOST ]] ; then
-        CURR_IP=$(echo "$LINE" | cut -d " " -f 1)
-        CURR_MACHINE=$(echo "$LINE" | cut -d " " -f 2)
+        CURR_IP=$(echo "$LINE" | sed 's/\t/ /g' | cut -d " " -f 1)
+        CURR_MACHINE=$(echo "$LINE" | sed 's/\t/ /g' | cut -d " " -f 2)
         # knock
         knock_ssh_pw "$CURR_IP" "$CURR_MACHINE"
     else
