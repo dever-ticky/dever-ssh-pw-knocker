@@ -1,8 +1,10 @@
 #!/bin/bash
 
+REQUIRED_COMMANDS="ping nc ssh grep sed cut"
+
 REGEX_IP_HOST="\b(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\b[[:blank:]]+[^[:blank:]]+"
 
-# knock and check password authentication is allowed
+# knock and check if password authentication is allowed
 knock_ssh_pw () {
     IP=$1
     MACHINE=$2
@@ -36,13 +38,24 @@ if [ "$#" -ne 1 ] ; then
 fi
 
 # check to see if file is accessible
-if [ ! -r $1 ] ; then
+if [ ! -r "$1" ] ; then
     echo "File $1 not readable"
     exit 2
 fi
 
+# check if required tools are installed (ping, nc, ssh)
+for COMMAND in $REQUIRED_COMMANDS
+do
+    if ! command -v $COMMAND > /dev/null 2>&1 ; then
+        echo "$COMMAND is not installed, but the script uses it"
+        echo "Please install $COMMAND"
+        echo "The required commands are: $REQUIRED_COMMANDS"
+        exit 3
+    fi
+done
+
 # remove commented lines from file and start reading it
-grep -v '^#' $1 | while IFS= read -r LINE
+grep -v '^#' "$1" | while IFS= read -r LINE
 do
     # validate "IP host" pattern and knock
     if [[ $LINE =~ $REGEX_IP_HOST ]] ; then
