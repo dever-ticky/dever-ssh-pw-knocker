@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # required commands used in this bash script
-REQUIRED_COMMANDS="ping nc ssh grep sed cut"
+REQUIRED_COMMANDS="ping nc ssh grep sed cut cat"
 
 # regex to validate "IP hostname" e.g. "192.168.1.224 desktop-pc"
 REGEX_IP_HOST="\b(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\b[[:blank:]]+[^[:blank:]]+"
