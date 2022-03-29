@@ -1,8 +1,16 @@
 #!/bin/bash
 
+# required commands used in this bash script
 REQUIRED_COMMANDS="ping nc ssh grep sed cut"
 
+# regex to validate "IP hostname" e.g. "192.168.1.224 desktop-pc"
 REGEX_IP_HOST="\b(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\b[[:blank:]]+[^[:blank:]]+"
+
+# temporary file to echo stuff into and along the way and cat at the end
+TMPFILE=$(mktemp /tmp/ssh-pw-knocker-script.XXXXXXXXXX)
+
+# pids list used for wating forked processes
+PIDS=()
 
 # knock and check if password authentication is allowed
 knock_ssh_pw () {
@@ -17,15 +25,15 @@ knock_ssh_pw () {
             # if ssh open knock
             ssh -v -n -o Batchmode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null DOES_NOT_EXIST@$IP 2>&1 | grep password > /dev/null 2>&1
             if [ $? == 0 ] ; then
-                echo "$IP $MACHINE - !! password authentication allowed !! Fix it !!"
+                echo "$IP $MACHINE - !! password authentication allowed !! Fix it !!" >> $TMPFILE
             else
-                echo "$IP $MACHINE - password authentication disabled"
+                echo "$IP $MACHINE - password authentication disabled" >> $TMPFILE
             fi
         else
-            echo "$IP $MACHINE - SSH standard port not open"
+            echo "$IP $MACHINE - SSH standard port not open" >> $TMPFILE
         fi
     else
-        echo "$IP $MACHINE - offline"
+        echo "$IP $MACHINE - offline" >> $TMPFILE
     fi
     exit 0
 }
@@ -41,6 +49,8 @@ fi
 if [ ! -r "$1" ] ; then
     echo "File $1 not readable"
     exit 2
+else
+    INPUT_FILE="$1"
 fi
 
 # check if required tools are installed (ping, nc, ssh)
@@ -54,8 +64,8 @@ do
     fi
 done
 
-# remove commented lines from file and start reading it
-grep -v '^#' "$1" | while IFS= read -r LINE
+# read input file
+while IFS= read -r LINE
 do
     # validate "IP host" pattern and knock
     if [[ $LINE =~ $REGEX_IP_HOST ]] ; then
@@ -63,11 +73,20 @@ do
         CURR_MACHINE=$(echo "$LINE" | sed 's/\t/ /g' | cut -d " " -f 2)
         # knock
         knock_ssh_pw "$CURR_IP" "$CURR_MACHINE" &
+        PIDS[${#PIDS[@]}]="$!"
     else
         echo "Ignore invalid line - $LINE"
     fi
+done<"$INPUT_FILE"
+
+# wait for all subprocesses to finish
+for PID in "${PIDS[@]}"
+do
+    wait $PID
 done
 
-wait
+# cat and remove the temporary file
+cat "$TMPFILE"
+rm "$TMPFILE"
 
 exit 0
